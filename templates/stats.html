@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Statistics{% endblock %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-chart-bar" style="color:var(--cyan)"></i> Statistics</h1>
+  <p>Visual analytics of all number plate detections</p>
+</div>
+
+<!-- TOP STATS -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-car"></i></div>
+    <div><div class="stat-value">{{ data.total }}</div><div class="stat-label">Total Detections</div></div>
+  </div>
+  <div class="stat-card alert">
+    <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div><div class="stat-value" style="color:var(--red)">{{ data.alerts }}</div><div class="stat-label">Blacklist Alerts</div></div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+    <div><div class="stat-value" style="color:var(--green)">{{ data.avg_confidence }}%</div><div class="stat-label">Avg Confidence</div></div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-icon"><i class="fas fa-ban"></i></div>
+    <div><div class="stat-value" style="color:var(--orange)">{{ data.blacklist_count }}</div><div class="stat-label">Blacklisted</div></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:1.5rem">
+
+  <!-- DAILY DETECTIONS CHART -->
+  <div class="card">
+    <div class="card-header"><h3><i class="fas fa-chart-line"></i> Detections — Last 7 Days</h3></div>
+    <div class="card-body">
+      <canvas id="dailyChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- CONFIDENCE DISTRIBUTION -->
+  <div class="card">
+    <div class="card-header"><h3><i class="fas fa-chart-pie"></i> Confidence Distribution</h3></div>
+    <div class="card-body">
+      <canvas id="confChart" height="180"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOP PLATES TABLE -->
+<div class="card">
+  <div class="card-header"><h3><i class="fas fa-trophy"></i> Most Detected Plates</h3></div>
+  <div class="card-body" style="padding:0">
+    <table>
+      <thead><tr><th>Rank</th><th>Plate Number</th><th>Detection Count</th><th>Bar</th></tr></thead>
+      <tbody>
+        {% for p in data.top_plates %}
+        <tr>
+          <td>
+            {% if loop.index == 1 %}<span style="color:gold;font-size:1.1rem">🥇</span>
+            {% elif loop.index == 2 %}<span style="font-size:1.1rem">🥈</span>
+            {% elif loop.index == 3 %}<span style="font-size:1.1rem">🥉</span>
+            {% else %}{{ loop.index }}{% endif %}
+          </td>
+          <td><strong style="font-family:monospace;font-size:1rem;letter-spacing:1px">{{ p.plate }}</strong></td>
+          <td><span class="badge badge-blue">{{ p.count }} times</span></td>
+          <td style="width:200px">
+            {% set maxcount = data.top_plates[0].count %}
+            <div style="background:#E8EDF5;border-radius:20px;height:8px">
+              <div style="background:var(--cyan);height:8px;border-radius:20px;width:{{ (p.count / maxcount * 100)|int }}%"></div>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--gray)">No data yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const dailyLabels = {{ data.daily_labels | tojson }};
+const dailyCounts = {{ data.daily_counts | tojson }};
+const confLabels  = {{ data.conf_labels  | tojson }};
+const confCounts  = {{ data.conf_counts  | tojson }};
+
+// Daily line chart
+new Chart(document.getElementById('dailyChart'), {
+  type: 'bar',
+  data: {
+    labels: dailyLabels.length ? dailyLabels : ['No data'],
+    datasets: [{
+      label: 'Detections',
+      data: dailyCounts.length ? dailyCounts : [0],
+      backgroundColor: 'rgba(0,180,216,0.25)',
+      borderColor: '#00B4D8',
+      borderWidth: 2,
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#EEF2F7' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Confidence pie chart
+new Chart(document.getElementById('confChart'), {
+  type: 'doughnut',
+  data: {
+    labels: confLabels,
+    datasets: [{
+      data: confCounts,
+      backgroundColor: ['#E74C3C','#F39C12','#3498DB','#2ECC71'],
+      borderWidth: 2, borderColor: '#fff'
+    }]
+  },
+  options: {
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } }
+    },
+    cutout: '60%'
+  }
+});
+</script>
+{% endblock %}
