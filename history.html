@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Detection History{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-history" style="color:var(--cyan)"></i> Detection History</h1>
+  <p>All {{ total }} recorded detections — searchable and paginated</p>
+</div>
+
+<!-- SEARCH BAR -->
+<div class="card" style="margin-bottom:1.5rem">
+  <div class="card-body" style="padding:1rem 1.5rem">
+    <form method="GET" action="/history" style="display:flex;gap:10px;align-items:center">
+      <div style="position:relative;flex:1">
+        <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray)"></i>
+        <input type="text" name="search" value="{{ search }}" placeholder="Search by plate number..."
+               class="form-control" style="padding-left:38px;margin:0"/>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+      {% if search %}
+      <a href="/history" class="btn btn-outline"><i class="fas fa-times"></i> Clear</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-table"></i> Detections
+      {% if search %}<span style="color:var(--gray);font-weight:400;font-size:0.85rem"> — searching "{{ search }}"</span>{% endif %}
+    </h3>
+    <span style="color:var(--gray);font-size:0.85rem">{{ total }} total</span>
+  </div>
+  <div class="card-body" style="padding:0">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Plate Number</th>
+          <th>Confidence</th>
+          <th>Status</th>
+          <th>Image</th>
+          <th>Date & Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in detections %}
+        <tr {% if d.is_blacklisted %}style="background:#FFF8F8"{% endif %}>
+          <td style="color:var(--gray);font-size:0.82rem">{{ d.id }}</td>
+          <td>
+            <strong style="font-family:monospace;font-size:1rem;letter-spacing:1px">{{ d.plate_text }}</strong>
+            {% if d.is_blacklisted %}
+            <span class="badge badge-red" style="margin-left:8px"><i class="fas fa-exclamation-circle"></i> ALERT</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="badge {% if d.confidence >= 80 %}badge-green{% elif d.confidence >= 50 %}badge-orange{% else %}badge-gray{% endif %}">
+                {{ d.confidence }}%
+              </span>
+            </div>
+          </td>
+          <td>
+            {% if d.is_blacklisted %}
+              <span class="badge badge-red"><i class="fas fa-ban"></i> Blacklisted</span>
+            {% else %}
+              <span class="badge badge-green"><i class="fas fa-check"></i> Clear</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--gray);font-size:0.82rem">{{ d.image_path or '—' }}</td>
+          <td style="color:var(--gray);font-size:0.82rem;white-space:nowrap">{{ d.detected_at[:16] }}</td>
+          <td>
+            <form method="POST" action="/delete/{{ d.id }}" onsubmit="return confirm('Delete this detection?')">
+              <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" style="text-align:center;padding:3rem;color:var(--gray)">
+            <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:0.5rem"></i>
+            No detections found{% if search %} for "{{ search }}"{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PAGINATION -->
+{% if total_pages > 1 %}
+<div style="display:flex;justify-content:center;gap:8px;margin-top:1.5rem;flex-wrap:wrap">
+  {% if page > 1 %}
+  <a href="?page={{ page-1 }}{% if search %}&search={{ search }}{% endif %}" class="btn btn-outline btn-sm">
+    <i class="fas fa-chevron-left"></i> Prev
+  </a>
+  {% endif %}
+
+  {% for p in range(1, total_pages+1) %}
+    {% if p == page %}
+    <span class="btn btn-primary btn-sm">{{ p }}</span>
+    {% elif p <= 3 or p >= total_pages-2 or (p >= page-2 and p <= page+2) %}
+    <a href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}" class="btn btn-outline btn-sm">{{ p }}</a>
+    {% elif p == 4 or p == total_pages-3 %}
+    <span style="padding:5px 8px;color:var(--gray)">…</span>
+    {% endif %}
+  {% endfor %}
+
+  {% if page < total_pages %}
+  <a href="?page={{ page+1 }}{% if search %}&search={{ search }}{% endif %}" class="btn btn-outline btn-sm">
+    Next <i class="fas fa-chevron-right"></i>
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

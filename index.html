@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Number Plate Detection{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-tachometer-alt" style="color:var(--cyan)"></i> Dashboard</h1>
+  <p>Real-time overview of your number plate detection system</p>
+</div>
+
+<!-- STAT CARDS -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-car"></i></div>
+    <div>
+      <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-label">Total Detections</div>
+    </div>
+  </div>
+  <div class="stat-card alert">
+    <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div>
+      <div class="stat-value" style="color:var(--red)">{{ stats.alerts }}</div>
+      <div class="stat-label">Blacklist Alerts</div>
+    </div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+    <div>
+      <div class="stat-value" style="color:var(--green)">{{ stats.avg_confidence }}%</div>
+      <div class="stat-label">Avg Confidence</div>
+    </div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-icon"><i class="fas fa-ban"></i></div>
+    <div>
+      <div class="stat-value" style="color:var(--orange)">{{ stats.blacklist_count }}</div>
+      <div class="stat-label">Blacklisted Plates</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem">
+
+  <!-- QUICK DETECT -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-bolt"></i> Quick Detection</h3>
+      <a href="/detect" class="btn btn-primary btn-sm"><i class="fas fa-arrow-right"></i> Full Page</a>
+    </div>
+    <div class="card-body" style="text-align:center; padding:2rem">
+      <div style="width:80px;height:80px;background:rgba(0,180,216,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:2rem;color:var(--cyan)">
+        <i class="fas fa-camera"></i>
+      </div>
+      <p style="color:var(--gray);margin-bottom:1.5rem;font-size:0.9rem">Upload a car image to detect and read the number plate instantly</p>
+      <a href="/detect" class="btn btn-primary"><i class="fas fa-upload"></i> Upload & Detect</a>
+    </div>
+  </div>
+
+  <!-- RECENT DETECTIONS -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-clock"></i> Recent Detections</h3>
+      <a href="/history" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="card-body" style="padding:0">
+      <table>
+        <thead>
+          <tr><th>Plate</th><th>Confidence</th><th>Time</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {% for d in recent %}
+          <tr>
+            <td><strong style="font-family:monospace;font-size:0.95rem">{{ d.plate_text }}</strong></td>
+            <td>
+              <span class="badge {% if d.confidence >= 80 %}badge-green{% elif d.confidence >= 50 %}badge-blue{% else %}badge-gray{% endif %}">
+                {{ d.confidence }}%
+              </span>
+            </td>
+            <td style="color:var(--gray);font-size:0.82rem">{{ d.detected_at[:16] }}</td>
+            <td>
+              {% if d.is_blacklisted %}
+                <span class="badge badge-red"><i class="fas fa-exclamation-circle"></i> ALERT</span>
+              {% else %}
+                <span class="badge badge-green"><i class="fas fa-check-circle"></i> Clear</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align:center;color:var(--gray);padding:2rem">No detections yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-cogs"></i> How The System Works</h3>
+  </div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:1rem;text-align:center">
+      {% set steps = [
+        ('fas fa-image','1. Input','Load car image'),
+        ('fas fa-sliders-h','2. Preprocess','Grayscale + Filter + Edges'),
+        ('fas fa-vector-square','3. Contours','Find rectangular shapes'),
+        ('fas fa-crop-alt','4. Extract','Crop plate region'),
+        ('fas fa-robot','5. AI OCR','EasyOCR reads text'),
+        ('fas fa-save','6. Save','Log to database'),
+      ] %}
+      {% for icon, title, desc in steps %}
+      <div style="padding:1rem;background:var(--light);border-radius:10px">
+        <div style="font-size:1.5rem;color:var(--cyan);margin-bottom:8px"><i class="{{ icon }}"></i></div>
+        <div style="font-weight:700;font-size:0.85rem;color:var(--navy);margin-bottom:4px">{{ title }}</div>
+        <div style="font-size:0.75rem;color:var(--gray)">{{ desc }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

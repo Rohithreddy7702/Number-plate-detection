@@ -1,0 +1,138 @@
+=====================================================
+  PHASE 3 — COMPLETE SETUP & DEPLOYMENT GUIDE
+  Number Plate Detection System
+=====================================================
+
+════════════════════════════════════════════════════
+  PART A — RUN LOCALLY (Test before deploying)
+════════════════════════════════════════════════════
+
+STEP 1: Install required libraries
+------------------------------------
+  pip install flask werkzeug opencv-python easyocr numpy Pillow gunicorn
+
+STEP 2: Go to your project folder
+------------------------------------
+  cd C:\Users\rohit\OneDrive\Desktop\InternProject\phase3
+
+STEP 3: Run the web app
+------------------------------------
+  python app.py
+
+STEP 4: Open in browser
+------------------------------------
+  http://localhost:5000
+
+That's it! The dashboard will open with demo data already loaded.
+The database (plates.db) is created automatically on first run.
+
+
+════════════════════════════════════════════════════
+  PART B — DEPLOY ONLINE (Free on Render.com)
+════════════════════════════════════════════════════
+
+STEP 1: Create a GitHub account
+------------------------------------
+  Go to: https://github.com
+  Sign up for free
+
+STEP 2: Create a new repository
+------------------------------------
+  1. Click "New repository"
+  2. Name it: number-plate-detection
+  3. Make it Public
+  4. Click "Create repository"
+
+STEP 3: Upload your files to GitHub
+------------------------------------
+  Option A — Using GitHub website (easiest):
+    1. Open your repo on GitHub
+    2. Click "Add file" → "Upload files"
+    3. Drag and drop ALL files from your phase3 folder:
+       - app.py
+       - database.py
+       - requirements.txt
+       - Procfile
+       - render.yaml
+       - templates/ folder (all HTML files inside)
+    4. Click "Commit changes"
+
+  Option B — Using Git commands:
+    git init
+    git add .
+    git commit -m "Phase 3: Number Plate Detection Web App"
+    git branch -M main
+    git remote add origin https://github.com/YOURUSERNAME/number-plate-detection.git
+    git push -u origin main
+
+STEP 4: Deploy on Render.com
+------------------------------------
+  1. Go to: https://render.com
+  2. Sign up for FREE using your GitHub account
+  3. Click "New +" → "Web Service"
+  4. Connect your GitHub account
+  5. Select your "number-plate-detection" repository
+  6. Fill in settings:
+       Name:          number-plate-detection
+       Environment:   Python 3
+       Build Command: pip install -r requirements.txt
+       Start Command: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+  7. Click "Create Web Service"
+  8. Wait 3-5 minutes for deployment
+  9. Your live URL will be: https://number-plate-detection.onrender.com
+
+⚠️ IMPORTANT NOTES FOR RENDER:
+  - Free tier spins down after 15 mins of inactivity
+  - First load after sleep takes ~30 seconds (normal)
+  - EasyOCR model downloads on first run (~500MB, takes 2-3 mins)
+  - The database resets on each deploy (use demo data for presentation)
+
+
+════════════════════════════════════════════════════
+  PART C — WHAT EACH FILE DOES
+════════════════════════════════════════════════════
+
+  app.py          → Main Flask web server, all routes, detection logic
+  database.py     → SQLite database — save/read/search detections & blacklist
+  requirements.txt→ Python libraries to install
+  Procfile        → Tells Render how to start the app
+  render.yaml     → Render deployment configuration
+  templates/
+    base.html     → Navigation bar + shared layout for all pages
+    index.html    → Dashboard with stats + recent detections
+    detect.html   → Upload image + run detection page
+    history.html  → All detections with search and pagination
+    stats.html    → Charts and analytics
+    blacklist.html→ Add/remove blacklisted plates
+
+
+════════════════════════════════════════════════════
+  PART D — PAGES IN THE WEB APP
+════════════════════════════════════════════════════
+
+  /              → Dashboard (stats overview + recent detections)
+  /detect        → Upload car image and run detection
+  /history       → Full detection log with search
+  /stats         → Charts: daily detections, confidence, top plates
+  /blacklist     → Add/remove plates from blacklist
+
+
+════════════════════════════════════════════════════
+  PART E — HOW TO EXPLAIN TO MENTOR
+════════════════════════════════════════════════════
+
+"In Phase 3 we built a complete web application using Flask — a Python
+web framework. The system has 5 pages:
+
+1. Dashboard — shows total detections, alerts, average confidence
+2. Detect — user uploads a car image, the AI pipeline runs and shows
+   the result with bounding box, plate text, and confidence score
+3. History — all detections stored in SQLite database, searchable
+4. Stats — visual charts showing detection trends and confidence data
+5. Blacklist — admin can add/remove blacklisted plates; any future
+   detection of those plates triggers an automatic red alert
+
+The app is deployed live on Render.com so it can be accessed from
+any device on the internet — not just my laptop."
+
+=====================================================
