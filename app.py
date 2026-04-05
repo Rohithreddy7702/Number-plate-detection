@@ -25,7 +25,9 @@ try:
 except Exception as e:
     print(f"[WARNING] OCR not available: {e}")
     OCR_AVAILABLE = False
-
+os.makedirs('uploads', exist_ok=True)
+db.init_db()
+db.seed_demo_data()
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
