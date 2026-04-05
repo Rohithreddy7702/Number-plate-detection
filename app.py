@@ -67,17 +67,26 @@ def extract_plate(image, contour):
     return plate_crop, (x, y, w, h)
 
 def read_plate_text(plate_image):
-    if not OCR_AVAILABLE:
-        return "DEMO-PLATE-XY01", 92.5
+    ocr = get_reader()
+    if ocr is None:
+        # Fallback — read using basic OpenCV thresholding
+        try:
+            gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
+            gray = cv2.resize(gray, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            return "OCR_UNAVAILABLE", 0.0
+        except:
+            return "UNREADABLE", 0.0
     try:
-        gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
-        gray = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        config = '--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-        text = pytesseract.image_to_string(thresh, config=config)
-        text = ''.join(c for c in text if c.isalnum()).upper()
-        confidence = 85.0 if len(text) >= 4 else 40.0
-        return text, confidence
+        rgb_plate = cv2.cvtColor(plate_image, cv2.COLOR_BGR2RGB)
+        results = ocr.readtext(rgb_plate)
+        plate_text = ""
+        confidence = 0.0
+        for (bbox, text, prob) in results:
+            if prob > 0.2:
+                plate_text += text + " "
+                confidence = max(confidence, prob)
+        return plate_text.strip().upper(), round(confidence * 100, 2)
     except Exception as e:
         print(f"[OCR Error] {e}")
         return "UNREADABLE", 0.0
