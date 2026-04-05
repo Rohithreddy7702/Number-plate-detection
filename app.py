@@ -17,17 +17,21 @@ from datetime import datetime
 import base64
 import database as db
 
-# Lightweight OCR using pytesseract
-try:
-    import pytesseract
-    OCR_AVAILABLE = True
-    print("[INFO] Pytesseract OCR ready!")
-except Exception as e:
-    print(f"[WARNING] OCR not available: {e}")
-    OCR_AVAILABLE = False
-os.makedirs('uploads', exist_ok=True)
-db.init_db()
-db.seed_demo_data()
+# Lazy load EasyOCR — only load when first detection runs
+reader = None
+
+def get_reader():
+    global reader
+    if reader is None:
+        try:
+            import easyocr
+            reader = easyocr.Reader(['en'], gpu=False, verbose=False)
+            print("[INFO] EasyOCR loaded!")
+        except Exception as e:
+            print(f"[WARNING] EasyOCR failed: {e}")
+            reader = False
+    return reader if reader else None
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
