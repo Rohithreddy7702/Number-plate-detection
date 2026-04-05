@@ -230,8 +230,10 @@ def delete_detection(det_id):
 # ─────────────────────────────────────────────
 # MAIN
 # ─────────────────────────────────────────────
+# Create uploads folder on startup — works on both local and Render
+os.makedirs('uploads', exist_ok=True)
+
 if __name__ == '__main__':
-    os.makedirs('uploads', exist_ok=True)
     db.init_db()
     db.seed_demo_data()
     print("\n" + "="*50)
