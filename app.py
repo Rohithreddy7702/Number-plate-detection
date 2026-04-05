@@ -17,22 +17,19 @@ from datetime import datetime
 import base64
 import database as db
 
-# Try to import easyocr, fallback to mock if unavailable
+# Lightweight OCR using pytesseract
 try:
-    import easyocr
-    reader = easyocr.Reader(['en'], gpu=False)
+    import pytesseract
     OCR_AVAILABLE = True
-    print("[INFO] EasyOCR loaded successfully!")
+    print("[INFO] Pytesseract OCR ready!")
 except Exception as e:
-    print(f"[WARNING] EasyOCR not available: {e}")
+    print(f"[WARNING] OCR not available: {e}")
     OCR_AVAILABLE = False
-    reader = None
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
-
 # ─────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────
@@ -64,21 +61,20 @@ def extract_plate(image, contour):
     return plate_crop, (x, y, w, h)
 
 def read_plate_text(plate_image):
-    if not OCR_AVAILABLE or reader is None:
+    if not OCR_AVAILABLE:
         return "DEMO-PLATE-XY01", 92.5
     try:
-        rgb_plate = cv2.cvtColor(plate_image, cv2.COLOR_BGR2RGB)
-        results = reader.readtext(rgb_plate)
-        plate_text = ""
-        confidence = 0.0
-        for (bbox, text, prob) in results:
-            if prob > 0.2:
-                plate_text += text + " "
-                confidence = max(confidence, prob)
-        return plate_text.strip().upper(), round(confidence * 100, 2)
+        gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
+        gray = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        config = '--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        text = pytesseract.image_to_string(thresh, config=config)
+        text = ''.join(c for c in text if c.isalnum()).upper()
+        confidence = 85.0 if len(text) >= 4 else 40.0
+        return text, confidence
     except Exception as e:
         print(f"[OCR Error] {e}")
-        return "", 0.0
+        return "UNREADABLE", 0.0
 
 def draw_results(image, contour, plate_text, bbox, confidence):
     output = image.copy()

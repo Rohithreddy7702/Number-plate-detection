@@ -2,7 +2,7 @@ services:
   - type: web
     name: number-plate-detection
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: apt-get install -y tesseract-ocr && pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     envVars:
       - key: PYTHON_VERSION
