@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Blacklist Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-ban" style="color:var(--cyan)"></i> Blacklist Management</h1>
+  <p>Manage blacklisted vehicle plates — any detected match will trigger an instant alert</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 2fr;gap:1.5rem;align-items:start">
+
+  <!-- ADD TO BLACKLIST -->
+  <div class="card">
+    <div class="card-header"><h3><i class="fas fa-plus-circle"></i> Add to Blacklist</h3></div>
+    <div class="card-body">
+      <div class="alert-box alert-warning" style="margin-bottom:1.2rem">
+        <i class="fas fa-info-circle"></i>
+        <div>Adding a plate will flag it in all future detections and mark past detections too.</div>
+      </div>
+      <form method="POST" action="/blacklist/add">
+        <div class="form-group">
+          <label><i class="fas fa-car"></i> Plate Number *</label>
+          <input type="text" name="plate" class="form-control" placeholder="e.g. MH12AB1234"
+                 required style="text-transform:uppercase" maxlength="20"/>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-comment"></i> Reason</label>
+          <input type="text" name="reason" class="form-control" placeholder="e.g. Stolen vehicle, Unpaid fines"/>
+        </div>
+        <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center">
+          <i class="fas fa-ban"></i> Add to Blacklist
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- BLACKLISTED PLATES TABLE -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-list"></i> Blacklisted Plates</h3>
+      <span style="background:var(--red);color:white;padding:3px 12px;border-radius:20px;font-size:0.82rem;font-weight:700">
+        {{ plates|length }} plates
+      </span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Plate Number</th><th>Reason</th><th>Added On</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          {% for p in plates %}
+          <tr>
+            <td style="color:var(--gray);font-size:0.82rem">{{ loop.index }}</td>
+            <td>
+              <strong style="font-family:monospace;font-size:1rem;letter-spacing:1px;color:var(--red)">
+                {{ p.plate_text }}
+              </strong>
+            </td>
+            <td style="color:var(--gray);font-size:0.88rem">{{ p.reason or '—' }}</td>
+            <td style="color:var(--gray);font-size:0.82rem">{{ p.added_at[:10] }}</td>
+            <td>
+              <form method="POST" action="/blacklist/remove/{{ p.id }}"
+                    onsubmit="return confirm('Remove {{ p.plate_text }} from blacklist?')">
+                <button type="submit" class="btn btn-sm" style="background:#E8EDF5;color:var(--navy)">
+                  <i class="fas fa-check-circle" style="color:var(--green)"></i> Remove
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center;padding:3rem;color:var(--gray)">
+              <i class="fas fa-check-circle" style="font-size:2rem;color:var(--green);display:block;margin-bottom:0.5rem"></i>
+              No plates currently blacklisted
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- HOW ALERTS WORK -->
+<div class="card">
+  <div class="card-header"><h3><i class="fas fa-info-circle"></i> How the Alert System Works</h3></div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;text-align:center">
+      {% for icon, title, desc, color in [
+        ('fas fa-upload','1. Upload Image','User uploads a vehicle image','var(--cyan)'),
+        ('fas fa-robot','2. AI Detects','System reads the plate number','var(--cyan)'),
+        ('fas fa-database','3. DB Check','Plate is checked against blacklist','var(--orange)'),
+        ('fas fa-exclamation-triangle','4. Alert Fired','Red alert shown if plate matches','var(--red)'),
+      ] %}
+      <div style="padding:1.2rem;background:var(--light);border-radius:10px">
+        <div style="font-size:1.8rem;color:{{ color }};margin-bottom:8px"><i class="{{ icon }}"></i></div>
+        <div style="font-weight:700;font-size:0.88rem;color:var(--navy);margin-bottom:4px">{{ title }}</div>
+        <div style="font-size:0.78rem;color:var(--gray)">{{ desc }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
