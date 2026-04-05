@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Number Plate Detection{% endblock %}</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy:   #0D1B2A;
+      --blue:   #1B4F72;
+      --cyan:   #00B4D8;
+      --cyan2:  #0096B7;
+      --white:  #FFFFFF;
+      --light:  #F0F8FF;
+      --gray:   #8EAFC2;
+      --card:   #142535;
+      --green:  #2ECC71;
+      --red:    #E74C3C;
+      --orange: #F39C12;
+      --text:   #1A2A3A;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #F4F7FB; color: var(--text); }
+
+    /* NAVBAR */
+    .navbar {
+      background: var(--navy);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      height: 62px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .navbar .brand {
+      color: var(--white);
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .navbar .brand span { color: var(--cyan); }
+    .navbar .brand i { color: var(--cyan); font-size: 1.3rem; }
+    .nav-links { display: flex; gap: 4px; margin-left: auto; }
+    .nav-links a {
+      color: var(--gray);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      display: flex; align-items: center; gap: 7px;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      background: rgba(0,180,216,0.15);
+      color: var(--cyan);
+    }
+    .nav-links a i { font-size: 0.95rem; }
+
+    /* MAIN CONTENT */
+    .main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* PAGE HEADER */
+    .page-header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+      border-radius: 14px;
+      padding: 2rem 2.5rem;
+      margin-bottom: 2rem;
+      color: white;
+    }
+    .page-header h1 { font-size: 1.7rem; margin-bottom: 0.3rem; }
+    .page-header p { color: var(--gray); font-size: 0.95rem; }
+
+    /* STAT CARDS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--cyan);
+      transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card.alert { border-left-color: var(--red); }
+    .stat-card.green { border-left-color: var(--green); }
+    .stat-card.orange { border-left-color: var(--orange); }
+    .stat-icon {
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      background: rgba(0,180,216,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; color: var(--cyan); flex-shrink: 0;
+    }
+    .stat-card.alert .stat-icon { background: rgba(231,76,60,0.1); color: var(--red); }
+    .stat-card.green .stat-icon { background: rgba(46,204,113,0.1); color: var(--green); }
+    .stat-card.orange .stat-icon { background: rgba(243,156,18,0.1); color: var(--orange); }
+    .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--navy); line-height: 1; }
+    .stat-label { font-size: 0.82rem; color: var(--gray); margin-top: 4px; }
+
+    /* CARDS */
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      background: var(--navy);
+      color: white;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .card-header h3 { font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+    .card-header h3 i { color: var(--cyan); }
+    .card-body { padding: 1.5rem; }
+
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; }
+    th { background: var(--light); color: var(--navy); padding: 10px 14px; text-align: left; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 11px 14px; border-bottom: 1px solid #EEF2F7; font-size: 0.9rem; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #F8FBFF; }
+
+    /* BADGES */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 0.78rem; font-weight: 600;
+    }
+    .badge-green { background: #D5F5E3; color: #1E8449; }
+    .badge-red   { background: #FADBD8; color: #C0392B; }
+    .badge-blue  { background: #D6EAF8; color: #1A5276; }
+    .badge-gray  { background: #EAECEE; color: #566573; }
+    .badge-orange{ background: #FDEBD0; color: #784212; }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 8px;
+      border: none; cursor: pointer;
+      font-size: 0.88rem; font-weight: 600;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .btn-primary { background: var(--cyan); color: white; }
+    .btn-primary:hover { background: var(--cyan2); }
+    .btn-danger  { background: var(--red); color: white; }
+    .btn-danger:hover { background: #C0392B; }
+    .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--cyan);
+      color: var(--cyan);
+    }
+    .btn-outline:hover { background: var(--cyan); color: white; }
+
+    /* FORMS */
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .form-control {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid #D5E8F5; border-radius: 8px;
+      font-size: 0.9rem; outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus { border-color: var(--cyan); }
+
+    /* ALERT */
+    .alert-box {
+      border-radius: 10px; padding: 1rem 1.2rem;
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 1rem; font-size: 0.9rem;
+    }
+    .alert-danger  { background: #FDEDEC; color: #922B21; border: 1px solid #F5B7B1; }
+    .alert-success { background: #EAFAF1; color: #1E8449; border: 1px solid #A9DFBF; }
+    .alert-warning { background: #FEF9E7; color: #784212; border: 1px solid #F9E79F; }
+
+    /* FOOTER */
+    .footer {
+      text-align: center; padding: 2rem;
+      color: var(--gray); font-size: 0.82rem;
+      border-top: 1px solid #E8EDF5; margin-top: 3rem;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .nav-links a span { display: none; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .main { padding: 1rem; }
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="brand">
+    <i class="fas fa-camera"></i>
+    Number Plate <span>Detection</span>
+  </a>
+  <div class="nav-links">
+    <a href="/" class="{% if request.endpoint=='index' %}active{% endif %}">
+      <i class="fas fa-home"></i><span>Dashboard</span>
+    </a>
+    <a href="/detect" class="{% if request.endpoint=='detect' %}active{% endif %}">
+      <i class="fas fa-search"></i><span>Detect</span>
+    </a>
+    <a href="/history" class="{% if request.endpoint=='history' %}active{% endif %}">
+      <i class="fas fa-history"></i><span>History</span>
+    </a>
+    <a href="/stats" class="{% if request.endpoint=='stats' %}active{% endif %}">
+      <i class="fas fa-chart-bar"></i><span>Stats</span>
+    </a>
+    <a href="/blacklist" class="{% if request.endpoint=='blacklist' %}active{% endif %}">
+      <i class="fas fa-ban"></i><span>Blacklist</span>
+    </a>
+  </div>
+</nav>
+
+<div class="main">
+  {% block content %}{% endblock %}
+</div>
+
+<div class="footer">
+  Number Plate Detection System &nbsp;|&nbsp; Phase 3 &nbsp;|&nbsp; Built with Python + Flask + OpenCV + EasyOCR
+</div>
+
+</body>
+</html>
